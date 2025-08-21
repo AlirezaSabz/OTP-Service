@@ -17,10 +17,19 @@ func NewRouter(userSvc *user.Service, otpSvc *otp.Service, jwtSvc *auth.JWTServi
 		JWTService:  jwtSvc,
 	}
 
-	mux.HandleFunc("/request-otp", h.RequestOTP)
-	mux.HandleFunc("/verify-otp", h.VerifyOTP)
-	mux.HandleFunc("/user", h.GetUser)
-	mux.HandleFunc("/users", h.ListUsers)
+	mux.HandleFunc("/request-otp", method(http.MethodPost, h.RequestOTP))
+	mux.HandleFunc("/verify-otp", method(http.MethodPost, h.VerifyOTP))
+	mux.HandleFunc("/user", method(http.MethodGet, h.GetUser))
+	mux.HandleFunc("/users", method(http.MethodGet, h.ListUsers))
 
 	return mux
+}
+func method(method string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		next(w, r)
+	}
 }
